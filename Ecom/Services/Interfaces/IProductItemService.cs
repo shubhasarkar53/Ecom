@@ -5,7 +5,7 @@ using Ecom.Models;
 
 namespace Ecom.Services.Interfaces
 {
-    public interface IItemService
+    public interface IProductItemService
     {
         // Quantity-specific operations
         Task<int> IncreaseQuantityAsync(int productItemId, int amount);
