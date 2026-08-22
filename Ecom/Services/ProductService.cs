@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Ecom.Data;
 using Ecom.Models;
 using Ecom.Services.Interfaces;
+using Ecom.DTOs.Product;
 
 namespace Ecom.Services
 {
@@ -16,48 +17,66 @@ namespace Ecom.Services
             _context = context;
         }
 
-        public async Task<IEnumerable<Product>> GetAllAsync()
+        public async Task<IEnumerable<ProductResponseDTO>> GetAllAsync()
         {
-            return await _context.Products.Include(p => p.ProductItem).AsNoTracking().ToListAsync();
+            var products = await _context.Products.Include(p => p.ProductItem).AsNoTracking().ToListAsync();
+
+            return products.Select(p => ToResponseDTO(p));
         }
 
-        public async Task<Product?> GetByIdAsync(int id)
+        public async Task<ProductResponseDTO?> GetByIdAsync(int id)
         {
-            return await _context.Products.Include(p => p.ProductItem).AsNoTracking().FirstOrDefaultAsync(p => p.Id == id);
+            var product = await _context.Products.Include(p => p.ProductItem).AsNoTracking().FirstOrDefaultAsync(p => p.Id == id);
+
+            return product is null ? null : ToResponseDTO(product);
         }
 
-        public async Task<Product> CreateAsync(Product product)
+        public async Task<ProductResponseDTO> CreateAsync(ProductRequestDTO reqProduct)
         {
+            Product product = new Product
+            {
+                ProductName = reqProduct.ProductName,
+                CreatedBy = "System",//implement later
+                CreatedOn = DateTime.UtcNow,
+                ProductItem = new ProductItem
+                {
+                    Quantity = reqProduct.Quantity
+                }
+            };
+
             await _context.Products.AddAsync(product);
             await _context.SaveChangesAsync();
-            return product;
+
+            return new ProductResponseDTO
+            {
+                Id = product.Id,
+                ProductName = product.ProductName,
+                Quantity = product.ProductItem.Quantity,
+                CreatedBy = product.CreatedBy,
+                CreatedOn = product.CreatedOn
+            };
         }
 
-        public async Task<bool> UpdateAsync(Product product)
+        public async Task<bool> UpdateAsync(ProductRequestDTO reqProduct, int id)
         {
-            var existing = await _context.Products.Include(p => p.ProductItem).FirstOrDefaultAsync(p => p.Id == product.Id);
+            var existing = await _context.Products.Include(p => p.ProductItem).FirstOrDefaultAsync(p => p.Id == id);
 
             if (existing is null)
                 return false;
 
             // Update scalar properties
-            existing.ProductName = product.ProductName;
-            existing.CreatedBy = product.CreatedBy;
-            existing.CreatedOn = product.CreatedOn;
-            existing.ModifiedBy = product.ModifiedBy;
-            existing.ModifiedOn = product.ModifiedOn;
+            existing.ProductName = reqProduct.ProductName;
+            existing.ModifiedBy = "System";//implement later
+            existing.ModifiedOn = DateTime.UtcNow;
 
             // If caller provided ProductItem, update or attach accordingly
-            if (product.ProductItem is not null)
+            if (existing.ProductItem is null)
             {
-                if (existing.ProductItem is null)
-                {
-                    existing.ProductItem = product.ProductItem;
-                }
-                else
-                {
-                    existing.ProductItem.Quantity = product.ProductItem.Quantity;
-                }
+                existing.ProductItem = new ProductItem { Quantity = reqProduct.Quantity };
+            }
+            else
+            {
+                existing.ProductItem.Quantity = reqProduct.Quantity;
             }
 
             await _context.SaveChangesAsync();
@@ -74,5 +93,14 @@ namespace Ecom.Services
             await _context.SaveChangesAsync();
             return true;
         }
+
+        private static ProductResponseDTO ToResponseDTO(Product product) => new()
+        {
+            Id = product.Id,
+            ProductName = product.ProductName,
+            Quantity = product.ProductItem?.Quantity ?? 0,
+            CreatedBy = product.CreatedBy,
+            CreatedOn = product.CreatedOn
+        };
     }
 }
