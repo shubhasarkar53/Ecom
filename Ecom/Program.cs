@@ -1,7 +1,10 @@
 using Ecom.Data;
 using Ecom.Services;
 using Ecom.Services.Interfaces;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.IdentityModel.Tokens;
+using System.Text;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -16,6 +19,29 @@ builder.Services.AddDbContext<ApplicationDbContext>(options => options.UseSqlSer
 //services
 builder.Services.AddScoped<IProductService, ProductService>();
 builder.Services.AddScoped<IProductItemService, ProductItemService>();
+
+//auth service
+builder.Services.AddScoped<IAuthService,AuthService>();
+
+builder.Services.AddAuthentication(JwtBearerDefaults.AuthenticationScheme)
+    .AddJwtBearer(options =>
+    {
+        var jwt = builder.Configuration["Jwt:Key"];
+        options.TokenValidationParameters = new TokenValidationParameters
+        {
+
+            ValidateIssuerSigningKey = true,
+            IssuerSigningKey = new SymmetricSecurityKey(Encoding.UTF8.GetBytes(jwt!)),
+            ValidateLifetime = true,
+            ValidateIssuer = false,
+            ValidateAudience = false,
+
+            ClockSkew = TimeSpan.Zero
+
+        };
+    });
+
+builder.Services.AddAuthorization();
 
 //swagger
 builder.Services.AddEndpointsApiExplorer();
