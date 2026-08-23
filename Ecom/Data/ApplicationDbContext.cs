@@ -13,14 +13,27 @@ namespace Ecom.Data
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {
             base.OnModelCreating(modelBuilder);
-
+            
+            // Product
             modelBuilder.Entity<Product>()
                 .HasOne(p => p.ProductItem)
                 .WithOne(pi => pi.Product)
                 .HasForeignKey<ProductItem>(pi => pi.ProductId);
+
+            // User configuration
+            modelBuilder.Entity<User>()
+                .HasIndex(u => u.Email)
+                .IsUnique();
+
+            modelBuilder.Entity<User>()
+                .Property(u => u.Email)
+                .HasMaxLength(150)
+                .IsRequired();
         }
 
         public DbSet<Product> Products { get; set; }
         public DbSet<ProductItem> ProductItems { get; set; }
+        public DbSet<User> Users { get; set; }
+
     }
 }
