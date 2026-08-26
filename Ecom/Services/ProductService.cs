@@ -2,6 +2,7 @@
 using System.Threading.Tasks;
 using Microsoft.EntityFrameworkCore;
 using Ecom.Data;
+using Ecom.Exceptions;
 using Ecom.Models;
 using Ecom.Services.Interfaces;
 using Ecom.DTOs.Product;
@@ -28,7 +29,9 @@ namespace Ecom.Services
         {
             var product = await _context.Products.Include(p => p.ProductItem).AsNoTracking().FirstOrDefaultAsync(p => p.Id == id);
 
-            return product is null ? null : ToResponseDTO(product);
+            if (product is null) throw new ProductNotFoundException($"Product with id {id} not found.");
+
+            return ToResponseDTO(product);
         }
 
         public async Task<ProductResponseDTO> CreateAsync(ProductRequestDTO reqProduct)
@@ -61,8 +64,7 @@ namespace Ecom.Services
         {
             var existing = await _context.Products.Include(p => p.ProductItem).FirstOrDefaultAsync(p => p.Id == id);
 
-            if (existing is null)
-                return false;
+            if (existing is null) throw new ProductNotFoundException($"Product with id {id} was not found.");
 
             // Update scalar properties
             existing.ProductName = reqProduct.ProductName;
@@ -86,8 +88,7 @@ namespace Ecom.Services
         public async Task<bool> DeleteAsync(int id)
         {
             var existing = await _context.Products.FindAsync(id);
-            if (existing is null)
-                return false;
+            if (existing is null) throw new ProductNotFoundException($"Product with id {id} was not found.");
 
             _context.Products.Remove(existing);
             await _context.SaveChangesAsync();

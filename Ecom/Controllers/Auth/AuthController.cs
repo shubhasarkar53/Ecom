@@ -17,35 +17,20 @@ namespace Ecom.Controllers.Auth
         }
 
         [HttpPost("register")]
-        public async Task<IActionResult> Register(
-            RegisterRequestDto request)
+        public async Task<IActionResult> Register(RegisterRequestDto request)
         {
-            try
-            {
-                var result = await _authService.RegisterAsync(request);
+            var result = await _authService.RegisterAsync(request);
 
-                return Ok(result);
-            }
-            catch (InvalidOperationException ex)
-            {
-                return BadRequest(new { message = ex.Message });
-            }
+            return Ok(result);
+
         }
 
         [HttpPost("login")]
-        public async Task<IActionResult> Login(
-            LoginRequestDto request)
+        public async Task<IActionResult> Login(LoginRequestDto request)
         {
-            try
-            {
-                var result = await _authService.LoginAsync(request);
+            var result = await _authService.LoginAsync(request);
 
-                return Ok(result);
-            }
-            catch (UnauthorizedAccessException ex)
-            {
-                return Unauthorized( new { message = ex.Message });
-            }
+            return Ok(result);
         }
     }
 }

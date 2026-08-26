@@ -32,8 +32,6 @@ namespace Ecom.Controllers.Prouduct
         {
             var product = await _productService.GetByIdAsync(id);
 
-            if (product is null) return NotFound(new { message = $"Product with id {id} was not found."});
-
             return Ok(product);
         }
 
@@ -52,8 +50,6 @@ namespace Ecom.Controllers.Prouduct
         {
             var updated = await _productService.UpdateAsync(productRequest, id);
 
-            if (!updated) return NotFound(new { message = $"Product with id {id} was not found." });
-
             return NoContent();
         }
 
@@ -62,8 +58,6 @@ namespace Ecom.Controllers.Prouduct
         public async Task<IActionResult> Delete(int id)
         {
             var deleted = await _productService.DeleteAsync(id);
-
-            if (!deleted) return NotFound(new { message = $"Product with id {id} was not found." });
 
             return NoContent();
         }
